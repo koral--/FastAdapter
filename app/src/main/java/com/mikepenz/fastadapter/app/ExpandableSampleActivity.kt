@@ -5,11 +5,13 @@ import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.mikepenz.fastadapter.GenericItem
+import com.mikepenz.fastadapter.IExpandable
 import com.mikepenz.fastadapter.adapters.FastItemAdapter
 import com.mikepenz.fastadapter.adapters.GenericFastItemAdapter
 import com.mikepenz.fastadapter.app.databinding.ActivitySampleBinding
 import com.mikepenz.fastadapter.app.items.expandable.SimpleSubExpandableItem
 import com.mikepenz.fastadapter.app.items.expandable.SimpleSubItem
+import com.mikepenz.fastadapter.expandable.expandableExtension
 import com.mikepenz.fastadapter.expandable.getExpandableExtension
 import com.mikepenz.fastadapter.select.getSelectExtension
 import com.mikepenz.itemanimators.SlideDownAlphaAnimator
@@ -35,7 +37,23 @@ class ExpandableSampleActivity : AppCompatActivity() {
         //create our FastAdapter
         fastItemAdapter = FastItemAdapter()
 
-        fastItemAdapter.getExpandableExtension()
+        fastItemAdapter.expandableExtension {
+            fastItemAdapter.onPreClickListener = { _, _, _, position ->
+                val allExpandableItems = (0 until fastItemAdapter.itemCount).map {
+                    fastItemAdapter.getItem(it)
+                }.filterIsInstance<IExpandable<*>>()
+                val clickedItem = fastItemAdapter.getItem(position)
+
+                if (clickedItem is SimpleSubExpandableItem && clickedItem.name?.textString?.startsWith("Test") == true && clickedItem.isExpanded.not()) {
+                    allExpandableItems.filterIsInstance<SimpleSubExpandableItem>().filter {
+                        it.name?.textString?.startsWith("Test") == true
+                    }.find { it.isExpanded }?.let {
+                        collapse(fastItemAdapter.getPosition(it), true)
+                    }
+                }
+                false
+            }
+        }
         val selectExtension = fastItemAdapter.getSelectExtension()
         selectExtension.isSelectable = true
         //expandableExtension.setOnlyOneExpandedItem(true);
